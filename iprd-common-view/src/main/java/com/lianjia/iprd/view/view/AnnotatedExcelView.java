@@ -1,10 +1,10 @@
-package com.lianjia.iprd.util.util;
+package com.lianjia.iprd.view.view;
 
 import com.lianjia.iprd.common.ErrorCode;
-import com.lianjia.iprd.util.annotation.Cell;
-import com.lianjia.iprd.util.annotation.Sheet;
-import com.lianjia.iprd.util.common.ExcelException;
-import com.lianjia.iprd.util.common.SheetBean;
+import com.lianjia.iprd.view.annotation.Cell;
+import com.lianjia.iprd.view.annotation.Sheet;
+import com.lianjia.iprd.view.common.ExcelException;
+import com.lianjia.iprd.view.common.SheetBean;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;

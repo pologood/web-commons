@@ -1,4 +1,4 @@
-package com.lianjia.iprd.util.common;
+package com.lianjia.iprd.view.common;
 
 import com.lianjia.iprd.common.BaseException;
 import com.lianjia.iprd.common.ErrorCode;

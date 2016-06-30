@@ -1,4 +1,4 @@
-package com.lianjia.iprd.util.common;
+package com.lianjia.iprd.view.common;
 
 import java.util.List;
 

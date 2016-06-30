@@ -1,4 +1,4 @@
-package com.lianjia.iprd.util.annotation;
+package com.lianjia.iprd.view.annotation;
 
 
 import org.apache.commons.lang3.StringUtils;
