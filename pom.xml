@@ -15,6 +15,11 @@
         <module>iprd-common-view</module>
     </modules>
 
+    <scm>
+        <developerConnection>scm:git:git@git.lianjia.com:fengxiao/iprd-commons.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
     <properties>
         <!-- 主要依赖库的版本定义 -->
         <spring.version>3.2.13.RELEASE</spring.version>
@@ -144,6 +149,15 @@
                                 ${project.basedir}/src/main/java
                             </sourcepath>
                         </compilerArguments>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>2.5.2</version>
+                    <configuration>
+                        <autoVersionSubmodules>true</autoVersionSubmodules>
+                        <useReleaseProfile>false</useReleaseProfile>
                     </configuration>
                 </plugin>
             </plugins>
