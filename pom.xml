@@ -5,7 +5,7 @@
     <groupId>com.lianjia.iprd</groupId>
     <artifactId>commons-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.1</version>
+    <version>1.2-SNAPSHOT</version>
     <modules>
         <module>iprd-common-base</module>
         <module>iprd-common-aop</module>
@@ -15,7 +15,7 @@
 
     <scm>
         <developerConnection>scm:git:git@git.lianjia.com:fengxiao/iprd-commons.git</developerConnection>
-        <tag>commons-parent-1.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
@@ -49,7 +49,7 @@
             <dependency>
                 <groupId>com.lianjia.iprd</groupId>
                 <artifactId>iprd-common-base</artifactId>
-                <version>1.1</version>
+                <version>1.2-SNAPSHOT</version>
             </dependency>
             <!-- iprd commons -->
 
