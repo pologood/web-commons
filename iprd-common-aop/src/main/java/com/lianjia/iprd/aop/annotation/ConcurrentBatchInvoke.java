@@ -19,4 +19,9 @@ public @interface ConcurrentBatchInvoke {
      */
     int pageSize() default 30;
 
+    /**
+     * 并发线程调用时间间隔,单位毫秒
+     */
+    long interval() default 0L;
+
 }

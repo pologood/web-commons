@@ -9,9 +9,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.view.document.AbstractExcelView;
@@ -36,6 +37,7 @@ public class AnnotatedExcelView extends AbstractExcelView {
     private static final String DUMP_TIME_FORMAT = "_yyyy-MM-dd_HH-mm-ss";
     private static final String Excel_POSTFIX = ".xls";
     private static final Integer WAIT_TIMEOUT = 2;
+    private static final Integer ROW_ACCESS_WINDOW_SIZE = 100;
     private static ThreadLocal<LinkedBlockingQueue<ExcelDumpBean>> threadLocal = new ThreadLocal<>();
 
     @Override
@@ -82,7 +84,13 @@ public class AnnotatedExcelView extends AbstractExcelView {
             throw new ExcelException(ErrorCode.EXCEL_SHEET_NOT_EXIST_ERROR);
         }
 
-        List<SheetBean<?>> beanList = Arrays.asList(sheets);
+        createExcel(excelName, postfixWithDate, dateFormat, Arrays.asList(sheets));
+        Long endTime = System.currentTimeMillis();
+        logger.debug("generate HssWorkbook cost time is {}ms", endTime - startTime);
+    }
+
+    private void createExcel(String excelName, boolean postfix, String dateFormat, List<SheetBean<?>> beanList)
+            throws ExcelException {
         Collections.sort(beanList, new Comparator<SheetBean<?>>() {
             @Override
             public int compare(SheetBean<?> o1, SheetBean<?> o2) {
@@ -96,28 +104,31 @@ public class AnnotatedExcelView extends AbstractExcelView {
             }
         });
 
-        ExcelDumpBean dumpBean = new ExcelDumpBean(new HSSFWorkbook());
+        SXSSFWorkbook workbook = new SXSSFWorkbook(ROW_ACCESS_WINDOW_SIZE);
+        workbook.setCompressTempFiles(true);
+
+        ExcelDumpBean dumpBean = new ExcelDumpBean(workbook);
         for (SheetBean<?> sheetObj : beanList) {
             Class<?> clazz = sheetObj.getClazz();
             Sheet sheet;
             if (clazz == null || (sheet = clazz.getAnnotation(Sheet.class)) == null) {
                 continue;
             }
-            assembleSheet(clazz.getDeclaredFields(), dumpBean.getWorkbook().createSheet(sheet.name()), sheetObj.getDataList());
+            assembleSheet(clazz.getDeclaredFields(), dumpBean.getWorkbook().createSheet(sheet.name()), sheetObj.
+                    getDataList());
         }
 
-        dumpBean.setExcelName(StringUtils.join(excelName, postfixWithDate ? DateFormatUtils.format(
-                System.currentTimeMillis(), dateFormat) : StringUtils.EMPTY, Excel_POSTFIX));
+        dumpBean.setExcelName(StringUtils.join(excelName, postfix ? DateFormatUtils.format(System.currentTimeMillis(),
+                dateFormat) : StringUtils.EMPTY, Excel_POSTFIX));
         putJob(dumpBean);
-        Long endTime = System.currentTimeMillis();
-        logger.debug("generate HssWorkbook cost time is {}ms", endTime - startTime);
     }
 
-    private void assembleSheet(Field[] fields, HSSFSheet sheet, List<?> data) throws ExcelException {
+    private void assembleSheet(Field[] fields, org.apache.poi.ss.usermodel.Sheet sheet, List<?> data)
+            throws ExcelException {
         int columnCount = NumberUtils.INTEGER_ZERO;
         int rowCount = NumberUtils.INTEGER_ZERO;
 
-        HSSFRow header = sheet.createRow(rowCount++);
+        Row header = sheet.createRow(rowCount++);
         List<Field> sortedFields = Arrays.asList(fields);
         Collections.sort(sortedFields, new Comparator<Field>() {
             @Override
@@ -142,7 +153,7 @@ public class AnnotatedExcelView extends AbstractExcelView {
 
         for (Object obj : data) {
             columnCount = NumberUtils.INTEGER_ZERO;
-            HSSFRow row = sheet.createRow(rowCount++);
+            Row row = sheet.createRow(rowCount++);
             for (Field field : sortedFields) {
                 field.setAccessible(true);
                 try {
@@ -173,14 +184,14 @@ public class AnnotatedExcelView extends AbstractExcelView {
     }
 
     private class ExcelDumpBean {
-        HSSFWorkbook workbook;
+        Workbook workbook;
         String excelName;
 
-        public ExcelDumpBean(HSSFWorkbook workbook) {
+        public ExcelDumpBean(Workbook workbook) {
             this.workbook = workbook;
         }
 
-        public HSSFWorkbook getWorkbook() {
+        public Workbook getWorkbook() {
             return workbook;
         }
 

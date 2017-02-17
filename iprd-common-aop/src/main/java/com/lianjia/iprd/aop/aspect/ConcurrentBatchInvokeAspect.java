@@ -38,10 +38,10 @@ public class ConcurrentBatchInvokeAspect implements Ordered {
                 args);
 
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
-        Annotation[] annotations = method.getParameterAnnotations()[args.length - 1];
+        Annotation[] annotations = method.getParameterAnnotations()[args.length - NumberUtils.INTEGER_ONE];
 
-        if (!(args[args.length - 1] instanceof Object[])) {
-            logger.error("param {} is not array", args[args.length - 1]);
+        if (!(args[args.length - NumberUtils.INTEGER_ONE] instanceof Object[])) {
+            logger.error("param {} is not array", args[args.length - NumberUtils.INTEGER_ONE]);
             throw new AopException(ErrorCode.ANNOTATION_ILLEGAL_USE);
         }
 
@@ -50,7 +50,7 @@ public class ConcurrentBatchInvokeAspect implements Ordered {
             throw new AopException(ErrorCode.ANNOTATION_ILLEGAL_USE);
         }
 
-        Object[] array = (Object[]) args[args.length - 1];
+        Object[] array = (Object[]) args[args.length - NumberUtils.INTEGER_ONE];
 
         boolean batchArrayExist = false;
         for (Annotation annotation : annotations) {
@@ -64,13 +64,13 @@ public class ConcurrentBatchInvokeAspect implements Ordered {
         }
 
 
-        return concurrentBatch(pjp, args, array, concurrentBatchInvoke.pageSize());
+        return concurrentBatch(pjp, args, array, concurrentBatchInvoke.pageSize(), concurrentBatchInvoke.interval());
     }
 
     /**
      * 将 objs 切分成相同大小的几份,大小为 pageSize,并发调用接口,合并结果
      */
-    private Collection concurrentBatch(ProceedingJoinPoint pjp, Object[] args, Object[] objs, int pageSize)
+    private Collection concurrentBatch(ProceedingJoinPoint pjp, Object[] args, Object[] objs, int pageSize, long interval)
             throws AopException {
         int totalPage = objs.length / pageSize + (objs.length % pageSize == NumberUtils.INTEGER_ZERO ? NumberUtils.
                 INTEGER_ZERO : NumberUtils.INTEGER_ONE);
@@ -79,14 +79,20 @@ public class ConcurrentBatchInvokeAspect implements Ordered {
         List<Future<Collection>> futureList = new LinkedList<>();
         ExecutorService executorService = Executors.newCachedThreadPool();
 
-        for (int i = NumberUtils.INTEGER_ZERO; i < totalPage; i++) {
-            Object[] tmpObjs = ArrayUtils.subarray(objs, i * pageSize, i == totalPage ? objs.length : (i + 1) *
-                    pageSize);
-            Object[] workerArgs = ArrayUtils.clone(args);//copy 一份,防止出现同步问题
-            workerArgs[workerArgs.length - 1] = tmpObjs;
-            futureList.add(executorService.submit(new InvokeWorker(pjp, workerArgs)));
-        }
         try {
+            for (int i = NumberUtils.INTEGER_ZERO; i < totalPage; i++) {
+                Object[] tmpObjs = ArrayUtils.subarray(objs, i * pageSize, i == totalPage ? objs.length : (i +
+                        NumberUtils.INTEGER_ONE) * pageSize);
+                /**
+                 * copy 一份,防止出现同步问题
+                 */
+                Object[] workerArgs = ArrayUtils.clone(args);
+                workerArgs[workerArgs.length - NumberUtils.INTEGER_ONE] = tmpObjs;
+                futureList.add(executorService.submit(new InvokeWorker(pjp, workerArgs)));
+
+                Thread.currentThread().sleep(interval);
+            }
+
             Long startTime = System.currentTimeMillis();
             for (Future<Collection> future : futureList) {
                 Collection collection = future.get();
@@ -109,6 +115,8 @@ public class ConcurrentBatchInvokeAspect implements Ordered {
         } catch (ExecutionException e) {
             logger.error(e.getMessage(), e);
             throw new AopException(ErrorCode.INVOKE_REMOTE_API_ERROR);
+        } finally {
+            executorService.shutdown();
         }
     }
 
@@ -134,6 +142,6 @@ public class ConcurrentBatchInvokeAspect implements Ordered {
     }
 
     public int getOrder() {
-        return 1;
+        return NumberUtils.INTEGER_ONE;
     }
 }
