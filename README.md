@@ -14,7 +14,7 @@
 ```sh
 $ cd ~/workspce/iprd-commons
 $ mvn release:prepare
-$ mvn release:preform
+$ mvn release:perform
 ```
 
 * 发布 snapshot 版本步骤如下，不会迭代版本号。
